@@ -235,11 +235,11 @@ const styles = StyleSheet.create({
   },
   variables_text: {
     fontSize: 20,
-    color: 'white',
+    color: '#828282',
   },
   ball: {
     position: 'absolute',    
-    backgroundColor: '#CE9178',
+    backgroundColor: '#FF515E',
     width: CIRCLE_SIZE,
     height: CIRCLE_SIZE,
     zIndex: 10,
