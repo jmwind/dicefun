@@ -17,6 +17,7 @@ const {
   and,
   not,
   decay,
+  call,
   spring,
   startClock,
   stopClock,
@@ -35,25 +36,43 @@ const CIRCLE_SIZE = 70;
 const STATUS_BAR_HEIGHT = 100;
 const DROPZONE_SIZE = CIRCLE_SIZE + 50;
 const { width, height } = Dimensions.get("window");
+
+const createDropZone = (this_id, dx, dy) => {
+  return {
+    id: this_id, 
+    x: (dx - DROPZONE_SIZE / 2),
+    y: dy,
+    cx: dx - (CIRCLE_SIZE / 2),
+    cy: dy + (DROPZONE_SIZE / 2) - (CIRCLE_SIZE / 2)  
+  }
+}
+
+const third = (width / 3);
 const drops = [
-  { 
-    x: (width - DROPZONE_SIZE) / 2,
-    y: 250,
-    cx: width / 2 - (CIRCLE_SIZE / 2),
-    cy: 250 + (DROPZONE_SIZE / 2) - (CIRCLE_SIZE / 2)
-  },
-  { 
-    x: (width - DROPZONE_SIZE) / 2, 
-    y: 500,
-    cx: (width / 2) - (CIRCLE_SIZE / 2),
-    cy: 500 + (DROPZONE_SIZE / 2) - (CIRCLE_SIZE / 2)
-  },
-]
+  createDropZone(1, third, 150), createDropZone(2, third, 350),
+  createDropZone(3, third * 2, 150), createDropZone(4, third * 2, 350),
+  createDropZone(5, third, 550), createDropZone(6, third * 2, 550)];
+const offsetX = new Value(drops[3].cx);
+const offsetY = new Value(drops[3].cy);
 
-const offsetX = new Value(drops[0].cx);
-const offsetY = new Value(drops[0].cy);
+const logSnapPoint = (value, points) => {
+  const __diffPoint = (p) => Math.abs(value - p);
+  const __deltas = points.map(p => __diffPoint(p));
+  const __minDelta = Math.min(...__deltas);
+  console.log("minDelta: " + __minDelta);
+  console.log("snap point for: " + value + " => " + points.reduce(
+    (acc, p) => {
+      if(__diffPoint(p) == __minDelta) {
+        return p;
+      } else {
+        return acc;
+      }
+    },
+    0
+  ));
+}
 
-export const snapPoint = (value, points) => {
+const snapPoint = (value, points) => {
   const diffPoint = (p) => abs(sub(value, p));
   const deltas = points.map(p => diffPoint(p));
   const minDelta = min(...deltas);
@@ -80,7 +99,12 @@ const withOffset = (value, gestureState, offset, velocity, snapPoints) => {
     restDisplacementThreshold: 0.001,
     toValue: new Value(0),
   }
+
   return block([
+    cond(eq(gestureState, State.BEGAN), [
+      set(offset, state.position),
+      stopClock(clock)
+    ]),
     // step 1: At the end of the gesture
     cond(eq(gestureState, State.END),
       // true
@@ -91,7 +115,7 @@ const withOffset = (value, gestureState, offset, velocity, snapPoints) => {
           // true
           [
             set(state.time, 0),
-            set(state.velocity, velocity),            
+            set(state.velocity, velocity),       
             set(config.toValue, snapPoint(state.position, snapPoints)),
             startClock(clock),            
           ]
@@ -130,6 +154,15 @@ export default function App() {
       }
     }
   ]);
+
+  pointsY = [175, 175, 375, 375, 575, 575];
+  pointsX = [103, 241, 103, 241, 103, 241];
+  logSnapPoint(600, pointsX);
+  logSnapPoint(600, pointsY);
+  logSnapPoint(10, pointsX);
+  logSnapPoint(600, pointsY);
+  logSnapPoint(400, pointsX);
+  logSnapPoint(200, pointsY);
  
   const translateX = 
     withOffset(translationX, state, offsetX, velocityX, drops.map(d => d.cx));
@@ -153,8 +186,11 @@ export default function App() {
           </View>
         </View>
         <View style={styles.main_container}>
-          <View style={[styles.drop, {left: drops[0].x, top: drops[0].y}]} />          
-          <View style={[styles.drop, {left: drops[1].x, top: drops[1].y}]} />
+          {
+            drops.map((d) => (
+              <View key={d.id} style={[styles.drop, {left: d.x, top: d.y}]} />
+            ))
+          }          
           <PanGestureHandler
               maxPointers={1}
               onGestureEvent={onGestureEvent}
