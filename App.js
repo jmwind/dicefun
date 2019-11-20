@@ -32,9 +32,9 @@ const {
   block,
 } = Animated;
 
-const CIRCLE_SIZE = 70;
+const CIRCLE_SIZE = 100;
 const STATUS_BAR_HEIGHT = 100;
-const DROPZONE_SIZE = CIRCLE_SIZE + 50;
+const DROPZONE_SIZE = CIRCLE_SIZE + 7;
 const { width, height } = Dimensions.get("window");
 
 const createDropZone = (this_id, dx, dy) => {
@@ -48,12 +48,14 @@ const createDropZone = (this_id, dx, dy) => {
 }
 
 const third = (width / 3);
-const drops = [
-  createDropZone(1, third, 150), createDropZone(2, third, 350),
-  createDropZone(3, third * 2, 150), createDropZone(4, third * 2, 350),
-  createDropZone(5, third, 550), createDropZone(6, third * 2, 550)];
-const offsetX = new Value(drops[3].cx);
-const offsetY = new Value(drops[3].cy);
+const drops = [  
+  createDropZone(3, third * 2, 125),      
+  createDropZone(5, third, 400),
+  createDropZone(1, third, 125), 
+  createDropZone(4, third * 2, 400), 
+];
+const offsetX = new Value(drops[0].cx);
+const offsetY = new Value(drops[0].cy);
 
 const logSnapPoint = (value, points) => {
   const __diffPoint = (p) => Math.abs(value - p);
@@ -76,6 +78,10 @@ const snapPoint = (value, points) => {
   const diffPoint = (p) => abs(sub(value, p));
   const deltas = points.map(p => diffPoint(p));
   const minDelta = min(...deltas);
+
+  const __diffPoint = (p) => Math.abs(value - p);
+  const __deltas = points.map(p => __diffPoint(p));
+  const __minDelta = Math.min(...__deltas);  
   return points.reduce(
     (acc, p) => cond(eq(diffPoint(p), minDelta), p, acc),
     new Value()
@@ -91,7 +97,7 @@ const withOffset = (value, gestureState, offset, velocity, snapPoints) => {
     time: new Value(0) 
   }
   const config = {
-    damping: 8,
+    damping: 20,
     mass: 1,
     stiffness: 200,
     overshootClamping: false,
@@ -154,15 +160,6 @@ export default function App() {
       }
     }
   ]);
-
-  pointsY = [175, 175, 375, 375, 575, 575];
-  pointsX = [103, 241, 103, 241, 103, 241];
-  logSnapPoint(600, pointsX);
-  logSnapPoint(600, pointsY);
-  logSnapPoint(10, pointsX);
-  logSnapPoint(600, pointsY);
-  logSnapPoint(400, pointsX);
-  logSnapPoint(200, pointsY);
  
   const translateX = 
     withOffset(translationX, state, offsetX, velocityX, drops.map(d => d.cx));
@@ -246,12 +243,13 @@ const styles = StyleSheet.create({
     width: CIRCLE_SIZE,
     height: CIRCLE_SIZE,
     zIndex: 10,
-    borderRadius: CIRCLE_SIZE / 2,
+    borderRadius: 7,
     borderColor: '#000',
   },
   drop: {
     position: 'absolute',
     backgroundColor: '#1E1E1E',    
+    borderRadius: 5,
     width: DROPZONE_SIZE,
     height: DROPZONE_SIZE,
     borderColor: '#000',
